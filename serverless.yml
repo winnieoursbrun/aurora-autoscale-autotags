@@ -1,0 +1,37 @@
+service: aurora-autoscale-autotags
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: ruby3.2
+  stage: production
+  region: eu-central-1
+  memorySize: 128
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "rds:DescribeDBInstances"
+            - "rds:DescribeDBClusters"
+            - "rds:ListTagsForResource"
+            - "rds:AddTagsToResource"
+            - "rds:RemoveTagsFromResource"
+          Resource: "*"
+
+functions:
+  main:
+    handler: handler.main
+    events:
+      - cloudwatchEvent:
+          event:
+            source:
+              - "aws.rds"
+            detail-type:
+              - "AWS API Call via CloudTrail"
+            detail:
+              eventSource:
+                - rds.amazonaws.com
+              eventName:
+                - CreateDBInstance
+                - CreateDBInstanceReadReplica
